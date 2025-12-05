@@ -34,7 +34,7 @@ export function SubscribeButton({ className }: { className?: string }) {
             const data = await response.json();
 
             if (data.url) {
-                window.location.href = data.url; 
+                window.location.href = data.url;
             } else {
                 toast.error("Erro ao iniciar pagamento.");
             }
