@@ -1,26 +1,25 @@
-// data/gameData.tsx
 import { Heart, Wind, Flame, Sparkles, Smile, Gift } from "lucide-react";
+import type { ElementType } from "react";
 
 export type ProductSuggestion = {
     id: string;
     name: string;
     description: string;
-    reason: string; // O "porquê" usar esse produto agora
+    reason: string;
     affiliateLink: string;
     price: string;
-    image: string; // Em um app real, seria uma URL de imagem
+    image: string; 
 };
 
 export type GameFace = {
     id: number;
     label: string;
     instruction: string;
-    icon: any;
+    icon: ElementType;
     color: string;
     suggestedProduct: ProductSuggestion;
 };
 
-// Mapeamento: Face do Dado -> Ação -> Produto Recomendado
 export const DICE_FACES: GameFace[] = [
     {
         id: 1,

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { PreferencesProvider } from "@/components/providers/preferences-provider";
+import { AuthProvider } from "@/components/providers/auth-provider";
+import { GameProvider } from "@/components/providers/game-provider"; 
 import { VlibrasWidget } from "@/components/accessibility/vlibras-widget";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { AgeGate } from "@/components/auth/age-gate";
 import { AOSInit } from "@/components/providers/aos-init";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
@@ -19,23 +22,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt" suppressHydrationWarning>
-     
       <body className="min-h-screen bg-background font-sans antialiased flex flex-col overflow-x-hidden">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <PreferencesProvider>
-            <AOSInit />
-            <SiteHeader />
-            {/* O main cresce para empurrar o footer, mas não força scroll interno */}
-            <main className="flex-1 w-full max-w-[100vw]">
-              {children}
-            </main>
-            <SiteFooter />
-            <VlibrasWidget />
+            <AuthProvider>
+              <GameProvider> 
+                <AOSInit />
+                <AgeGate />
+                <SiteHeader />
+                <main className="flex-1 w-full max-w-[100vw]">
+                  {children}
+                </main>
+                <SiteFooter />
+                <VlibrasWidget />
+              </GameProvider>
+            </AuthProvider>
           </PreferencesProvider>
         </ThemeProvider>
       </body>

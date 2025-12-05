@@ -7,10 +7,10 @@ import "aos/dist/aos.css";
 export const AOSInit = () => {
     useEffect(() => {
         AOS.init({
-            duration: 800, // Duração da animação em ms
-            once: true, // Animar apenas uma vez ao descer
+            duration: 800,
+            once: true,
             easing: 'ease-out-cubic',
-            offset: 50, // Começar a animar um pouco antes
+            offset: 50,
         });
     }, []);
 

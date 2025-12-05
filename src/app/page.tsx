@@ -1,224 +1,221 @@
 "use client";
 
 import React, { useState } from "react";
-import { toast } from "sonner";
-import { useReward } from 'react-rewards';
-import { motion } from "framer-motion";
-
-// Ícones
-import {
-  Heart, Flame, Sparkles, HelpCircle, BookOpen, Gift, Play
-} from "lucide-react";
-
-import { FaWhatsapp, FaInstagram } from "react-icons/fa";
-
-// Componentes UI (Seu template)
-import { Text } from "@/components/providers/preferences-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Dice5, Heart, Users, User, ArrowRight, Beer, Timer, Drama, ChevronLeft, LogOut } from "lucide-react";
+import { Text } from "@/components/providers/preferences-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 
-// NOSSO COMPONENTE NOVO
 import IntimacyGame from "@/components/game/IntimacyGame";
+import KamaSutraGame from "@/components/game/KamaSutraGame";
+import NeverHaveIEver from "@/components/game/NeverHaveIEver";
+import ForeplayRoulette from "@/components/game/ForeplayRoulette";
+import RoleplayGenerator from "@/components/game/RoleplayGenerator";
+import { GameShell } from "@/components/game/GameShell";
 
 export default function Home() {
-  const { reward: confettiReward } = useReward('confettiReward', 'confetti');
+  const { user, logout } = useAuth();
+  const [selectedGame, setSelectedGame] = useState<string | null>(null);
+  const [playersMode, setPlayersMode] = useState<"2" | "4" | "grupo">("2");
 
+  const isPremium = false;
+
+  // --- MODO DE JOGO ATIVO ---
+  if (selectedGame) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-10 px-4 flex flex-col items-center">
+        <div className="w-full max-w-4xl mb-6 flex items-center justify-between">
+          <Button variant="ghost" onClick={() => setSelectedGame(null)} className="gap-2">
+            <ChevronLeft className="w-4 h-4" />
+            <Text pt="Voltar" en="Back" es="Volver" />
+          </Button>
+
+          <Badge variant="outline" className="px-3 py-1 gap-2">
+            <Text pt="Modo:" en="Mode:" es="Modo:" />
+            {playersMode === "2" ? (
+              <Text pt="Casal (2)" en="Couple (2)" es="Pareja (2)" />
+            ) : (
+              <Text pt="Grupo (4+)" en="Group (4+)" es="Grupo (4+)" />
+            )}
+          </Badge>
+        </div>
+
+        <GameShell>
+          {selectedGame === "dice" && <IntimacyGame isPremium={isPremium} />}
+          {selectedGame === "kama" && <KamaSutraGame playersMode={playersMode} isPremium={isPremium} />}
+          {selectedGame === "never" && <NeverHaveIEver isPremium={isPremium} />}
+          {selectedGame === "roulette" && <ForeplayRoulette isPremium={isPremium} />}
+          {selectedGame === "roleplay" && <RoleplayGenerator isPremium={isPremium} />}
+        </GameShell>
+      </div>
+    );
+  }
+
+  // --- TELA INICIAL: DASHBOARD ---
   return (
-    <div className="flex flex-col w-full bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 py-16">
 
-      {/* =========================================
-          BLOCK 1: HERO SECTION (Sensual & Clean)
-      ========================================= */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-rose-300/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-purple-300/20 rounded-full blur-3xl" />
-        </div>
+      <div className="absolute top-20 right-4 md:right-10 flex items-center gap-2">
+        <span className="text-xs text-muted-foreground hidden sm:inline-block">
+          <Text pt="Olá," en="Hello," es="Hola," /> {user?.displayName || user?.email?.split('@')[0]}
+        </span>
+        <Button variant="ghost" size="icon" onClick={logout} title="Sair">
+          <LogOut className="w-4 h-4 text-rose-500" />
+        </Button>
+      </div>
 
-        <div className="container mx-auto px-4 relative z-10 text-center">
-          <div data-aos="fade-down">
-            <Badge variant="outline" className="mb-6 py-1.5 px-4 text-sm border-rose-200 text-rose-600 bg-rose-50 rounded-full">
-              <span className="mr-2">🔥</span>
-              <Text pt="Intimidade & Conexão" en="Intimacy & Connection" es="Intimidad y Conexión" />
-            </Badge>
-          </div>
+      <div className="text-center mb-10 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">
+          <Text pt="Escolha sua" en="Choose your" es="Elige tu" />{" "}
+          <span className="text-rose-600">
+            <Text pt="Experiência" en="Experience" es="Experiencia" />
+          </span>
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          <Text
+            pt="Selecione o modo de jogo e quem vai participar."
+            en="Select the game mode and who will participate."
+            es="Selecciona el modo de juego y quién participará."
+          />
+        </p>
+      </div>
 
-          <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight mb-6 text-slate-900 dark:text-slate-100 max-w-4xl mx-auto" data-aos="zoom-in" data-aos-delay="200">
-            <Text
-              pt="Transforme sua Rotina em Paixão."
-              en="Turn Routine into Passion."
-              es="Convierte la Rutina en Pasión."
-            />
-          </h1>
+      {/* Seletor de Jogadores */}
+      <div className="bg-white dark:bg-slate-900 p-1 rounded-full border shadow-sm mb-12 animate-in fade-in zoom-in duration-500 delay-100">
+        <Tabs defaultValue="2" onValueChange={(v) => setPlayersMode(v as "2" | "4" | "grupo")}>
+          <TabsList className="grid w-[300px] grid-cols-2">
+            <TabsTrigger value="2" className="gap-2">
+              <User className="w-4 h-4" /> <Text pt="A Dois" en="Couples" es="Pareja" />
+            </TabsTrigger>
+            <TabsTrigger value="4" className="gap-2">
+              <Users className="w-4 h-4" /> <Text pt="Grupo" en="Group" es="Grupo" />
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed" data-aos="fade-up" data-aos-delay="400">
-            <Text
-              pt="Jogos interativos, dicas de bem-estar sexual e produtos selecionados para reacender a chama. Tudo leve, seguro e divertido."
-              en="Interactive games, sexual wellness tips, and curated products to reignite the flame. Light, safe, and fun."
-              es="Juegos interactivos, consejos de bienestar sexual y productos seleccionados para reavivar la llama."
-            />
-          </p>
+      {/* Grid de Jogos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl px-4 pb-20">
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4" data-aos="fade-up" data-aos-delay="600">
-            <Button
-              size="lg"
-              className="h-14 px-8 text-lg rounded-full w-full sm:w-auto shadow-xl shadow-rose-500/20 bg-rose-600 hover:bg-rose-700 transition-all"
-              onClick={() => {
-                document.getElementById('game-section')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              <Play className="mr-2 h-5 w-5 fill-current" />
-              <Text pt="Começar a Jogar" en="Start Playing" es="Empezar a Jugar" />
-            </Button>
-
-            <Button size="lg" variant="outline" className="h-14 px-8 text-lg rounded-full border-slate-300 w-full sm:w-auto">
-              <BookOpen className="mr-2 h-5 w-5" />
-              Guia de Cosméticos
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================
-          BLOCK 2: THE GAME (Core Feature)
-      ========================================= */}
-      <section id="game-section" className="py-16 bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10" data-aos="fade-up">
-            <h2 className="text-3xl font-bold text-rose-600 mb-2">Dado do Amor</h2>
-            <p className="text-muted-foreground">Gire o dado para descobrir sua próxima aventura. Sem regras, apenas diversão.</p>
-          </div>
-
-          {/* INSERÇÃO DO COMPONENTE DO DADO */}
-          <div data-aos="zoom-in">
-            <IntimacyGame />
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================
-          BLOCK 3: EDUCATION & PRODUCTS
-      ========================================= */}
-      <section className="py-20 bg-slate-50 dark:bg-slate-950">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-12 items-start">
-
-            {/* Lado Esquerdo: Info */}
-            <div className="md:w-1/2" data-aos="fade-right">
-              <h2 className="text-3xl font-bold mb-6 text-slate-800 dark:text-slate-100">
-                <Text pt="Guia Sensorial Gall" en="Gall Sensory Guide" es="Guía Sensorial Gall" />
-              </h2>
-              <p className="text-slate-600 mb-8">
-                Muitas vezes queremos inovar, mas não sabemos por onde começar.
-                Entenda a diferença entre os cosméticos e como eles funcionam.
-              </p>
-
-              <Accordion type="single" collapsible className="w-full bg-white dark:bg-slate-900 rounded-xl border px-4 shadow-sm">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger className="text-lg font-semibold text-rose-600">
-                    O que são Géis Excitantes?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-slate-600 leading-relaxed">
-                    São géis que provocam sensações físicas na pele, como <strong>aquecimento (Hot)</strong> ou <strong>resfriamento (Ice)</strong>.
-                    Eles aumentam a circulação sanguínea no local, deixando a área muito mais sensível ao toque e ao sopro.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                  <AccordionTrigger className="text-lg font-semibold text-purple-600">
-                    Óleos de Massagem Beijáveis
-                  </AccordionTrigger>
-                  <AccordionContent className="text-slate-600 leading-relaxed">
-                    Diferente dos óleos comuns, os "beijáveis" são feitos para serem provados.
-                    Eles não deixam gosto amargo e permitem que a massagem evolua para carícias orais sem precisar lavar a pele.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-3" className="border-b-0">
-                  <AccordionTrigger className="text-lg font-semibold text-orange-600">
-                    Velas de Massagem
-                  </AccordionTrigger>
-                  <AccordionContent className="text-slate-600 leading-relaxed">
-                    Não queimam a pele! A cera derrete a uma temperatura morna e confortável, transformando-se em um óleo hidratante
-                    e aromático. Ideal para dias frios e massagens relaxantes.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+        {/* 1. Dado do Amor */}
+        <Card
+          className="cursor-pointer hover:border-rose-500 hover:shadow-lg transition-all group animate-in fade-in slide-in-from-bottom-8 duration-500 delay-100"
+          onClick={() => setSelectedGame("dice")}
+        >
+          <CardHeader>
+            <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-lg flex items-center justify-center mb-4 text-rose-600 group-hover:scale-110 transition-transform">
+              <Dice5 className="w-7 h-7" />
             </div>
+            <CardTitle><Text pt="Dado do Amor" en="Love Dice" es="Dado del Amor" /></CardTitle>
+            <CardDescription>
+              <Text
+                pt="Ações aleatórias para esquentar o clima. Beijos, toques e desafios."
+                en="Random actions to heat up the mood. Kisses, touches, and challenges."
+                es="Acciones aleatorias para calentar el ambiente. Besos, toques y desafíos."
+              />
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="text-rose-600 font-semibold text-sm group-hover:underline">
+            <Text pt="Jogar Agora" en="Play Now" es="Jugar Ahora" /> <ArrowRight className="w-4 h-4 ml-2" />
+          </CardFooter>
+        </Card>
 
-            {/* Lado Direito: Cards de Categoria */}
-            <div className="md:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4" data-aos="fade-left">
-              <Card className="hover:shadow-lg transition-shadow border-none bg-gradient-to-br from-pink-50 to-rose-50">
-                <CardHeader>
-                  <Flame className="w-8 h-8 text-rose-500 mb-2" />
-                  <CardTitle className="text-rose-700">Para Esquentar</CardTitle>
-                  <CardDescription>Géis Hot e Velas</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="hover:shadow-lg transition-shadow border-none bg-gradient-to-br from-teal-50 to-emerald-50">
-                <CardHeader>
-                  <Sparkles className="w-8 h-8 text-teal-500 mb-2" />
-                  <CardTitle className="text-teal-700">Para Relaxar</CardTitle>
-                  <CardDescription>Óleos Essenciais</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="hover:shadow-lg transition-shadow border-none bg-gradient-to-br from-purple-50 to-indigo-50">
-                <CardHeader>
-                  <Gift className="w-8 h-8 text-purple-500 mb-2" />
-                  <CardTitle className="text-purple-700">Kits Prontos</CardTitle>
-                  <CardDescription>Caixas Surpresa</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="hover:shadow-lg transition-shadow border-none bg-gradient-to-br from-yellow-50 to-orange-50">
-                <CardHeader>
-                  <HelpCircle className="w-8 h-8 text-orange-500 mb-2" />
-                  <CardTitle className="text-orange-700">Jogos</CardTitle>
-                  <CardDescription>Cartas e Dados</CardDescription>
-                </CardHeader>
-              </Card>
+        {/* 2. Kama Sutra */}
+        <Card
+          className="cursor-pointer hover:border-purple-500 hover:shadow-lg transition-all group animate-in fade-in slide-in-from-bottom-8 duration-500 delay-200"
+          onClick={() => setSelectedGame("kama")}
+        >
+          <CardHeader>
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4 text-purple-600 group-hover:scale-110 transition-transform">
+              <Heart className="w-7 h-7" />
             </div>
-          </div>
-        </div>
-      </section>
+            <CardTitle><Text pt="Kama Sutra Cards" en="Kama Sutra Cards" es="Cartas Kama Sutra" /></CardTitle>
+            <CardDescription>
+              <Text
+                pt="Descubra novas posições com ilustrações e dicas de execução."
+                en="Discover new positions with illustrations and execution tips."
+                es="Descubre nuevas posiciones con ilustraciones y consejos de ejecución."
+              />
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="text-purple-600 font-semibold text-sm group-hover:underline">
+            <Text pt="Sortear Posição" en="Draw Position" es="Sortear Posición" /> <ArrowRight className="w-4 h-4 ml-2" />
+          </CardFooter>
+        </Card>
 
-      {/* =========================================
-          BLOCK 4: CTA FINAL
-      ========================================= */}
-      <section className="py-24 container mx-auto px-4">
-        <div className="bg-gradient-to-r from-rose-600 to-purple-700 text-white rounded-3xl p-12 text-center relative overflow-hidden shadow-2xl" data-aos="zoom-in-up">
-          {/* Decorative Circles */}
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-white/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-white/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-
-          <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Quer ver mais produtos?
-            </h2>
-            <p className="text-rose-100 text-lg">
-              Acesse a loja completa da Gall para encontrar lubrificantes, acessórios e cosméticos de alta qualidade.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button variant="secondary" size="lg" className="rounded-full px-8 font-semibold shadow-lg hover:shadow-xl transition-all text-rose-600">
-                Ir para Gall.com.br
-              </Button>
+        {/* 3. Eu Nunca */}
+        <Card
+          className="cursor-pointer hover:border-green-500 hover:shadow-lg transition-all group animate-in fade-in slide-in-from-bottom-8 duration-500 delay-300"
+          onClick={() => setSelectedGame("never")}
+        >
+          <CardHeader>
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4 text-green-600 group-hover:scale-110 transition-transform">
+              <Beer className="w-7 h-7" />
             </div>
-          </div>
-        </div>
-      </section>
+            <CardTitle><Text pt="Eu Nunca" en="Never Have I Ever" es="Yo Nunca" /></CardTitle>
+            <CardDescription>
+              <Text
+                pt="Perguntas picantes. Quem já fez, bebe ou tira uma peça de roupa!"
+                en="Spicy questions. If you did it, drink or remove a clothing item!"
+                es="Preguntas picantes. ¡Quien lo hizo, bebe o quítate una prenda!"
+              />
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="text-green-600 font-semibold text-sm group-hover:underline">
+            <Text pt="Começar" en="Start" es="Empezar" /> <ArrowRight className="w-4 h-4 ml-2" />
+          </CardFooter>
+        </Card>
 
-      {/* Footer Simples
-      <footer className="py-8 text-center text-slate-400 text-sm">
-        <p>© 2025 Love Dice. Diversão para maiores de 18 anos.</p>
-        <div className="flex justify-center gap-4 mt-4 text-xl">
-          <FaInstagram className="hover:text-rose-500 cursor-pointer transition-colors" />
-          <FaWhatsapp className="hover:text-green-500 cursor-pointer transition-colors" />
-        </div>
-      </footer> */}
+        {/* 4. Roleta Preliminar */}
+        <Card
+          className="cursor-pointer hover:border-orange-500 hover:shadow-lg transition-all group animate-in fade-in slide-in-from-bottom-8 duration-500 delay-400"
+          onClick={() => setSelectedGame("roulette")}
+        >
+          <CardHeader>
+            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4 text-orange-600 group-hover:scale-110 transition-transform">
+              <Timer className="w-7 h-7" />
+            </div>
+            <CardTitle><Text pt="Roleta Preliminar" en="Foreplay Roulette" es="Ruleta Preliminar" /></CardTitle>
+            <CardDescription>
+              <Text
+                pt="Gire para combinar: Ação + Parte do Corpo + Tempo."
+                en="Spin to combine: Action + Body Part + Time."
+                es="Gira para combinar: Acción + Parte del Cuerpo + Tiempo."
+              />
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="text-orange-600 font-semibold text-sm group-hover:underline">
+            <Text pt="Girar Roleta" en="Spin Roulette" es="Girar Ruleta" /> <ArrowRight className="w-4 h-4 ml-2" />
+          </CardFooter>
+        </Card>
 
+        {/* 5. Roleplay Generator */}
+        <Card
+          className="cursor-pointer hover:border-blue-500 hover:shadow-lg transition-all group animate-in fade-in slide-in-from-bottom-8 duration-500 delay-500"
+          onClick={() => setSelectedGame("roleplay")}
+        >
+          <CardHeader>
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4 text-blue-600 group-hover:scale-110 transition-transform">
+              <Drama className="w-7 h-7" />
+            </div>
+            <CardTitle><Text pt="Gerador de Fantasia" en="Fantasy Generator" es="Generador de Fantasía" /></CardTitle>
+            <CardDescription>
+              <Text
+                pt="Crie cenários e personagens aleatórios para atuar com seu par."
+                en="Create random scenarios and characters to act out with your partner."
+                es="Crea escenarios y personajes aleatorios para actuar con tu pareja."
+              />
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="text-blue-600 font-semibold text-sm group-hover:underline">
+            <Text pt="Criar Cena" en="Create Scene" es="Crear Escena" /> <ArrowRight className="w-4 h-4 ml-2" />
+          </CardFooter>
+        </Card>
+
+      </div>
     </div>
   );
 }
