@@ -10,7 +10,7 @@ export function AgeGate() {
     const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
-      
+
         const timer = setTimeout(() => {
             const verified = localStorage.getItem("age-verified");
             if (!verified) {
@@ -32,7 +32,7 @@ export function AgeGate() {
 
     return (
         <Dialog open={isOpen} onOpenChange={() => { }}>
-            <DialogContent className="sm:max-w-md border-rose-200" hideCloseButton>
+            <DialogContent className="sm:max-w-md border-rose-200" showCloseButton={false}>
                 <DialogHeader>
                     <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-600">
                         <ShieldAlert className="w-8 h-8" />

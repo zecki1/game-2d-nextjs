@@ -34,8 +34,9 @@ export function GameShell({ children, gameId }: GameShellProps) {
 
     const childrenWithProps = React.Children.map(children, child => {
         if (React.isValidElement(child)) {
-            // @ts-expect-error Injetando props dinâmicas nos filhos.
-            return React.cloneElement(child, {
+            // Desabilita a checagem de 'no-explicit-any' para a linha
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return React.cloneElement(child as React.ReactElement<any>, {
                 onPlayAttempt: handlePlayAttempt,
                 remainingPlays: isPremium ? 999 : attemptsLeft,
                 isPremium: isPremium

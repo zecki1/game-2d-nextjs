@@ -20,8 +20,9 @@ interface GameProps {
     playersMode: "2" | "4" | "grupo";
     onPlayAttempt?: () => Promise<boolean>;
 }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function KamaSutraGame({ _playersMode, onPlayAttempt }: GameProps) {
+
+// CORREÇÃO: Usando a sintaxe de renomeação na desestruturação (playersMode: _playersMode)
+export default function KamaSutraGame({ playersMode: _playersMode, onPlayAttempt }: GameProps) {
     const [currentPos, setCurrentPos] = useState<typeof POSITIONS[0] | null>(null);
     const [isShuffling, setIsShuffling] = useState(false);
     const buttonRef = useRef<HTMLButtonElement>(null);

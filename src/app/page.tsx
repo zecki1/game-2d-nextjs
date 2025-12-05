@@ -21,7 +21,7 @@ export default function Home() {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [playersMode, setPlayersMode] = useState<"2" | "4" | "grupo">("2");
 
-  const isPremium = false;
+  // Removido: const isPremium = false; // Corrigindo o warning de unused-vars
 
   // --- MODO DE JOGO ATIVO ---
   if (selectedGame) {
@@ -43,12 +43,12 @@ export default function Home() {
           </Badge>
         </div>
 
-        <GameShell>
-          {selectedGame === "dice" && <IntimacyGame isPremium={isPremium} />}
-          {selectedGame === "kama" && <KamaSutraGame playersMode={playersMode} isPremium={isPremium} />}
-          {selectedGame === "never" && <NeverHaveIEver isPremium={isPremium} />}
-          {selectedGame === "roulette" && <ForeplayRoulette isPremium={isPremium} />}
-          {selectedGame === "roleplay" && <RoleplayGenerator isPremium={isPremium} />}
+        <GameShell gameId={selectedGame}>
+          {selectedGame === "dice" && <IntimacyGame />}
+          {selectedGame === "kama" && <KamaSutraGame playersMode={playersMode} />}
+          {selectedGame === "never" && <NeverHaveIEver />}
+          {selectedGame === "roulette" && <ForeplayRoulette />}
+          {selectedGame === "roleplay" && <RoleplayGenerator />}
         </GameShell>
       </div>
     );
@@ -219,3 +219,4 @@ export default function Home() {
     </div>
   );
 }
+

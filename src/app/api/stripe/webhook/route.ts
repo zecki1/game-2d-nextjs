@@ -6,9 +6,11 @@ import Stripe from "stripe";
 
 export async function POST(req: Request) {
     const body = await req.text();
-     const signature = (headers()).get("Stripe-Signature") as string;
+    // CORREÇÃO: Usando (await headers()) para satisfazer o verificador de tipo no ambiente de build
+    // A função 'headers' não é realmente assíncrona, mas essa sintaxe resolve o Type error do ambiente.
+    const signature = (await headers()).get("Stripe-Signature") as string;
 
-    let event: Stripe.Event; 
+    let event: Stripe.Event;
 
     try {
         event = stripe.webhooks.constructEvent(
@@ -16,26 +18,26 @@ export async function POST(req: Request) {
             signature,
             process.env.STRIPE_WEBHOOK_SECRET as string
         );
-    } catch (err) { 
+    } catch (err) {
         const errorMessage = (err as Error)?.message || "Unknown error";
         console.error("Webhook signature failed", errorMessage);
         return NextResponse.json({ error: "Webhook Error" }, { status: 400 });
     }
 
-   
+
     const session = event.data.object as Stripe.Checkout.Session;
 
     if (event.type === "checkout.session.completed") {
-        
+
         const userId = session.metadata?.userId;
 
         if (userId) {
-          
+
             try {
+                // ATUALIZA O USUÁRIO NO FIRESTORE PARA PREMIUM
                 await dbAdmin.collection("users").doc(userId).set(
                     {
                         isPremium: true,
-                     
                         subscriptionId: session.subscription as string,
                         customerId: session.customer as string,
                         updatedAt: new Date(),
