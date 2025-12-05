@@ -8,8 +8,8 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Template Robusto Next.js 15",
-  description: "Template Robusto Next.js 15",
+  title: "LoveDice",
+  description: "LoveDice",
 };
 
 export default function RootLayout({
