@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Dice5, ShoppingBag, User as UserIcon, LogOut } from "lucide-react"; // Adicionado Settings
+import { Dice5, ShoppingBag, User as UserIcon, LogOut, Settings } from "lucide-react"; // Adicionado Settings
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Text } from "@/components/providers/preferences-provider";
 import { Separator } from "@/components/ui/separator";
@@ -14,8 +14,8 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 
-// Importa o componente SettingsMenu
-import { SettingsMenu } from "@/components/settings-menu";
+// CORREÇÃO: Usando a importação do settings-menu que havíamos definido
+import { SettingsMenu } from "@/components/layout/settings-menu";
 
 export function SiteHeader() {
     const { user, logout } = useAuth();

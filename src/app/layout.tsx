@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PreferencesProvider } from "@/components/providers/preferences-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
-import { GameProvider } from "@/components/providers/game-provider"; 
+import { GameProvider } from "@/components/providers/game-provider";
 import { VlibrasWidget } from "@/components/accessibility/vlibras-widget";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -26,7 +26,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <PreferencesProvider>
             <AuthProvider>
-              <GameProvider> 
+              <GameProvider>
                 <AOSInit />
                 <AgeGate />
                 <SiteHeader />

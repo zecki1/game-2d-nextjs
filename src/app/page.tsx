@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Dice5, Heart, Users, User, ArrowRight, Beer, Timer, Drama, ChevronLeft, LogOut } from "lucide-react";
+import { Dice5, Heart, Users, User, ArrowRight, Beer, Timer, Drama, ChevronLeft, LogOut, Loader2 } from "lucide-react"; // Adicionado Loader2
 import { Text } from "@/components/providers/preferences-provider";
 import { useAuth } from "@/components/providers/auth-provider";
 
@@ -17,11 +17,21 @@ import RoleplayGenerator from "@/components/game/RoleplayGenerator";
 import { GameShell } from "@/components/game/GameShell";
 
 export default function Home() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth(); // Importado 'loading'
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [playersMode, setPlayersMode] = useState<"2" | "4" | "grupo">("2");
 
-  // Removido: const isPremium = false; // Corrigindo o warning de unused-vars
+  // SEÇÃO DE GUARDA DE ROTA LOCAL
+  if (loading) {
+    // Apenas mostra o loader enquanto o AuthProvider faz a primeira verificação e redireciona (se necessário)
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-rose-600 animate-spin" />
+      </div>
+    );
+  }
+
+  // Com o AuthProvider corrigido, este código só será alcançado se o usuário estiver logado.
 
   // --- MODO DE JOGO ATIVO ---
   if (selectedGame) {
@@ -58,14 +68,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 py-16">
 
-      <div className="absolute top-20 right-4 md:right-10 flex items-center gap-2">
-        <span className="text-xs text-muted-foreground hidden sm:inline-block">
-          <Text pt="Olá," en="Hello," es="Hola," /> {user?.displayName || user?.email?.split('@')[0]}
-        </span>
-        <Button variant="ghost" size="icon" onClick={logout} title="Sair">
-          <LogOut className="w-4 h-4 text-rose-500" />
-        </Button>
-      </div>
+      {/* Botão de Logout exibido APENAS se o usuário estiver logado */}
+      {user && (
+        <div className="absolute top-20 right-4 md:right-10 flex items-center gap-2">
+          <span className="text-xs text-muted-foreground hidden sm:inline-block">
+            <Text pt="Olá," en="Hello," es="Hola," /> {user.displayName || user.email?.split('@')[0]}
+          </span>
+          <Button variant="ghost" size="icon" onClick={logout} title="Sair">
+            <LogOut className="w-4 h-4 text-rose-500" />
+          </Button>
+        </div>
+      )}
 
       <div className="text-center mb-10 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">
@@ -219,4 +232,3 @@ export default function Home() {
     </div>
   );
 }
-

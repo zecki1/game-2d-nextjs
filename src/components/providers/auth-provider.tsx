@@ -27,19 +27,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
+        let isInitialLoad = true;
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
-            setLoading(false);
-            if (!loading && !currentUser && pathname !== "/login") {
+
+            // Lógica de Redirecionamento Imediato
+            // 1. Redireciona para login se não estiver logado E não estiver na página de login
+            if (!currentUser && pathname !== "/login") {
                 router.push("/login");
+            }
+            // 2. Opcional: Redireciona para home se estiver logado E na página de login
+            else if (currentUser && pathname === "/login") {
+                router.push("/");
+            }
+
+            // Define loading como false APENAS após a primeira verificação completa
+            if (isInitialLoad) {
+                setLoading(false);
+                isInitialLoad = false;
             }
         });
 
+        // Limpeza: a dependência 'loading' foi removida.
         return () => unsubscribe();
-    }, [router, pathname, loading]);
+    }, [router, pathname]); // Dependências: router e pathname são as únicas externas necessárias.
 
     const logout = async () => {
         await signOut(auth);
+        // O onAuthStateChanged deve pegar e redirecionar, mas o push aqui é uma garantia.
         router.push("/login");
     };
 

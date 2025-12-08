@@ -1,166 +1,202 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useMemo } from "react";
-import { motion, AnimatePresence, Variants } from "framer-motion"; // Importado Variants
+import { useState, useCallback } from "react";
+import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"; // Importação padrão das funções
+import { auth, googleProvider } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Heart, Layers, Loader2 } from "lucide-react";
-import { getSuggestedProduct } from "@/data/affiliates";
-import { ProductAd } from "@/components/ads/ProductAd";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Text } from "@/components/providers/preferences-provider";
+import { useRouter } from "next/navigation";
+import { Dice5, ShieldCheck, Loader2 } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
-// --- DADOS (MANTIDOS COMO CONSTANTES) ---
-const POSITIONS = [
-    { id: 1, title: { pt: "A Concha", en: "The Spoon", es: "La Cuchara" }, desc: { pt: "Clássico carinhoso.", en: "Affectionate classic.", es: "Clásico cariñoso." }, difficulty: "easy" },
-    { id: 2, title: { pt: "O Lótus", en: "The Lotus", es: "El Loto" }, desc: { pt: "Sentados frente a frente.", en: "Sitting face to face.", es: "Sentados frente a frente." }, difficulty: "medium" },
-    { id: 3, title: { pt: "A Ponte", en: "The Bridge", es: "El Puente" }, desc: { pt: "Exige força.", en: "Requires strength.", es: "Requiere fuerza." }, difficulty: "hard" },
-    { id: 4, title: { pt: "69", en: "69", es: "69" }, desc: { pt: "Prazer mútuo.", en: "Mutual pleasure.", es: "Placer mútuo." }, difficulty: "medium" }
-];
-
-// --- VARIANTS (RESOLUÇÃO DO ERRO DE BUILD) ---
-const deckVariants: Variants = {
-    // Estado inicial (não embaralhando)
-    initial: { opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 },
-    // Estado de embaralhamento
-    shuffling: {
-        x: [0, -10, 10, -5, 5, 0],
-        y: [0, 5, -5, 3, -3, 0],
-        rotate: [0, 5, -5, 3, -3, 0],
-        scale: [1, 1.05, 1],
-        transition: {
-            duration: 1.5,
-            ease: "easeInOut", // Tipagem correta ao usar Variants
-            times: [0, 0.2, 0.4, 0.6, 0.8, 1],
-            repeat: 0,
-        },
-    },
-    // Estado de saída (para quando a carta é revelada)
-    exit: { x: -300, opacity: 0, transition: { duration: 0.5 } },
-};
-
-const cardVariants: Variants = {
-    initial: { x: 300, opacity: 0, rotateY: -90 },
-    animate: { x: 0, opacity: 1, rotateY: 0, transition: { duration: 0.5 } },
-};
-
-
-interface GameProps {
-    playersMode: "2" | "4" | "grupo";
-    onPlayAttempt?: () => Promise<boolean>;
+// Interface para um erro que se parece com um FirebaseError
+interface AuthErrorWithCode extends Error {
+    code: string;
 }
 
-export default function KamaSutraGame({ playersMode: _playersMode, onPlayAttempt }: GameProps) { // eslint-disable-line @typescript-eslint/no-unused-vars
-    const [currentPos, setCurrentPos] = useState<typeof POSITIONS[0] | null>(null);
-    const [isShuffling, setIsShuffling] = useState(false);
-    const buttonRef = useRef<HTMLButtonElement>(null);
+export default function LoginPage() {
+    const router = useRouter();
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    const suggestedProduct = useMemo(() => getSuggestedProduct(), []);
+    const handleGoogleLogin = useCallback(async () => {
+        setLoading(true);
+        setError("");
+        try {
+            await signInWithPopup(auth, googleProvider);
+            // O AuthProvider deve pegar o login e redirecionar para '/'
+        } catch (err) {
+            console.error("Erro no login Google:", err);
+            const authError = err as AuthErrorWithCode;
 
+            if (authError && authError.code) {
+                if (authError.code === 'auth/popup-closed-by-user') {
+                    setError("O popup de login foi fechado.");
+                } else if (authError.code === 'auth/unauthorized-domain') {
+                    setError("Erro de configuração. Domínio não autorizado no Firebase Console.");
+                } else {
+                    setError("Erro ao conectar com Google. Tente novamente.");
+                }
+            } else {
+                setError("Ocorreu um erro desconhecido ao tentar login com Google.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, []); // Dependências vazias, pois router.push é pego pelo AuthProvider
 
-    const drawCard = useCallback(async () => {
-        if (isShuffling) return;
-
-        if (onPlayAttempt) {
-            const allowed = await onPlayAttempt();
-            if (!allowed) return;
+    const handleEmailAuth = useCallback(async () => {
+        if (!email || !password) {
+            setError("Por favor, preencha o email e a senha.");
+            return;
         }
 
-        setCurrentPos(null); // Inicia a transição de saída da carta anterior
-        setIsShuffling(true);
+        setLoading(true);
+        setError("");
+        try {
+            if (isRegistering) {
 
-        // Tempo de espera igual ao tempo de transição do shuffle
-        setTimeout(() => {
-            const random = POSITIONS[Math.floor(Math.random() * POSITIONS.length)];
-            setCurrentPos(random);
-            setIsShuffling(false);
+                await createUserWithEmailAndPassword(auth, email, password);
+            } else {
 
-            // Foca na nova carta para acessibilidade (após a transição de entrada)
-            setTimeout(() => {
-                const cardElement = document.getElementById("kama-card-result");
-                if (cardElement) cardElement.focus();
-            }, 500);
-        }, 1500);
-    }, [isShuffling, onPlayAttempt]);
+                await signInWithEmailAndPassword(auth, email, password);
+            }
+            // O AuthProvider deve pegar o login e redirecionar para '/'
+        } catch (err) {
+            console.error("Erro de autenticação:", err);
 
-    // O estado de animação muda entre "shuffling" (se estiver embaralhando) e "initial" (se estiver parado no deck)
-    const deckAnimationState = isShuffling ? "shuffling" : "initial";
+            const authError = err as AuthErrorWithCode;
+
+            if (authError && authError.code) {
+                switch (authError.code) {
+                    case 'auth/invalid-credential':
+                    case 'auth/wrong-password':
+                    case 'auth/user-not-found':
+                        setError(isRegistering ? "Email inválido ou senha fraca (mínimo 6 caracteres)." : "Senha ou email incorretos.");
+                        break;
+                    case 'auth/email-already-in-use':
+                        setError("Este email já está cadastrado.");
+                        break;
+                    case 'auth/weak-password':
+                        setError("A senha deve ter pelo menos 6 caracteres.");
+                        break;
+                    case 'auth/invalid-email':
+                        setError("O formato do email é inválido.");
+                        break;
+                    default:
+                        setError("Ocorreu um erro. Tente novamente.");
+                        break;
+                }
+            } else {
+                setError("Ocorreu um erro desconhecido. Tente novamente.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [isRegistering, email, password]);
 
     return (
-        <div className="w-full max-w-md mx-auto perspective-1000">
-            <div className="relative h-[500px] w-full flex items-center justify-center mb-6">
-                <AnimatePresence mode="wait">
-                    {(!currentPos || isShuffling) && (
-                        <motion.div
-                            key="deck"
-                            variants={deckVariants} // Usando Variants
-                            initial="initial"
-                            animate={deckAnimationState}
-                            exit="exit"
-                            className="absolute w-full h-full"
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+            <Card className="w-full max-w-md border-rose-100 dark:border-slate-800 shadow-2xl animate-in fade-in zoom-in duration-500">
+                <CardHeader className="text-center">
+                    <div className="mx-auto w-16 h-16 bg-gradient-to-br from-rose-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg rotate-3 transform hover:rotate-0 transition-all duration-300">
+                        <Dice5 className="w-10 h-10 text-white" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold">
+                        Love<span className="text-rose-600">Dice</span>
+                    </CardTitle>
+                    <CardDescription>
+                        {isRegistering ? (
+                            <Text pt="Crie sua conta para começar a jogar." en="Create account to start playing." es="Crea tu cuenta para jugar." />
+                        ) : (
+                            <Text pt="Entre para jogar e salvar seu histórico." en="Login to play and save history." es="Inicia sesión para jugar." />
+                        )}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+
+                    {/* Botões Sociais */}
+                    <div className="grid gap-2">
+                        <Button
+                            variant="outline"
+                            className="w-full h-12 text-base gap-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                            onClick={handleGoogleLogin}
+                            disabled={loading}
                         >
-                            {/* A CARTA ATRÁS (Shadow) - Cores ajustadas */}
-                            <div className="absolute top-0 left-0 w-full h-full bg-rose-200 dark:bg-slate-800 rounded-xl border-2 border-white dark:border-slate-700 transform rotate-3" />
+                            {loading && !isRegistering && email === "" ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <FcGoogle className="w-5 h-5" />
+                            )}
+                            <Text pt="Continuar com Google" en="Continue with Google" es="Continuar con Google" />
+                        </Button>
+                        {/* Microsoft Button - Placeholder visual até configurar Azure */}
+                        <Button variant="outline" disabled className="w-full h-12 text-base gap-2 opacity-60">
+                            <span className="text-blue-500 font-bold text-lg">❖</span>
+                            <Text pt="Microsoft (Em breve)" en="Microsoft (Soon)" es="Microsoft (Pronto)" />
+                        </Button>
+                    </div>
 
-                            {/* A CARTA PRINCIPAL DO BARALHO - Cores mantidas vibrantes */}
-                            <Card className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-rose-600 to-purple-700 border-4 border-white shadow-2xl flex flex-col items-center justify-center rounded-xl cursor-pointer" onClick={drawCard}>
-                                <Layers className="w-24 h-24 text-white/50 mb-4" />
-                                <h3 className="text-white font-bold text-2xl uppercase"><Text pt="Toque para Revelar" en="Tap to Reveal" es="Toca para Revelar" /></h3>
-                            </Card>
-                        </motion.div>
-                    )}
-                    {currentPos && !isShuffling && (
-                        <motion.div
-                            id="kama-card-result"
-                            key="card-face"
-                            tabIndex={-1}
-                            variants={cardVariants} // Usando Variants
-                            initial="initial"
-                            animate="animate"
-                            className="absolute w-full h-full focus:outline-none"
-                        >
-                            {/* CARTA REVELADA - Cores ajustadas para tema escuro */}
-                            <Card className="w-full h-full flex flex-col justify-between p-6 bg-white dark:bg-slate-900 border-2 border-rose-200 dark:border-slate-700 shadow-2xl rounded-xl">
+                    <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                        <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground"><Text pt="Ou use email" en="Or use email" es="O usar email" /></span></div>
+                    </div>
 
-                                {/* Conteúdo Superior */}
-                                <div className="w-full flex justify-between items-center text-rose-600 dark:text-rose-400">
-                                    <span className="text-xl font-bold">{currentPos.id}</span>
-                                    <Heart className="w-6 h-6 fill-rose-600 dark:fill-rose-400" />
-                                </div>
+                    {/* Formulário de Email */}
+                    <div className="space-y-3">
+                        <Input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            className="h-12"
+                            disabled={loading}
+                        />
+                        <Input
+                            type="password"
+                            placeholder={isRegistering ? "Crie uma senha (mínimo 6 caracteres)" : "Sua senha"}
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            className="h-12"
+                            disabled={loading}
+                        />
+                        {error && <p className="text-red-500 text-sm text-center font-medium mt-2">{error}</p>}
+                    </div>
 
-                                {/* Conteúdo Central */}
-                                <div className="text-center my-4 flex-1 flex flex-col justify-center items-center">
-                                    <div className="w-24 h-24 bg-rose-50 dark:bg-slate-800 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl shadow-inner">🧘</div>
-                                    <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2"><Text pt={currentPos.title.pt} en={currentPos.title.en} es={currentPos.title.es} /></h2>
-                                    <p className="text-slate-600 dark:text-slate-400 text-lg"><Text pt={currentPos.desc.pt} en={currentPos.desc.en} es={currentPos.desc.es} /></p>
-                                </div>
+                    <Button
+                        className="w-full h-12 bg-rose-600 hover:bg-rose-700 font-bold text-lg shadow-md"
+                        onClick={handleEmailAuth}
+                        disabled={loading || !email || !password}
+                    >
+                        {loading && email !== "" ? (
+                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                        ) : isRegistering ? (
+                            <Text pt="CRIAR CONTA" en="SIGN UP" es="REGISTRARSE" />
+                        ) : (
+                            <Text pt="ENTRAR" en="LOGIN" es="ENTRAR" />
+                        )}
+                    </Button>
 
-                                {/* CONTAINER DA PROPAGANDA */}
-                                <div className="w-full pt-4 border-t border-dashed border-rose-200 dark:border-slate-700">
-                                    <ProductAd product={suggestedProduct} />
-                                </div>
-
-                            </Card>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-
-            {/* BOTÃO DE TIRAR OUTRA CARTA - Cores ajustadas para melhor contraste */}
-            <Button
-                ref={buttonRef}
-                onClick={drawCard}
-                disabled={isShuffling}
-                className="w-full h-14 text-lg font-bold rounded-full bg-rose-600 dark:bg-rose-700 text-white hover:bg-rose-700 dark:hover:bg-rose-800 transition-colors hover:scale-105 shadow-lg"
-            >
-                {isShuffling ? (
-                    <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        <Text pt="Embaralhando..." en="Shuffling..." es="Barajando..." />
-                    </>
-                ) : (
-                    <Text pt="Tirar Outra Carta" en="Draw Another Card" es="Sacar Otra Carta" />
-                )}
-            </Button>
+                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-2">
+                        <ShieldCheck className="w-4 h-4 text-green-500" />
+                        <Text pt="Ambiente Seguro +18" en="Secure Environment 18+" es="Entorno Seguro +18" />
+                    </div>
+                </CardContent>
+                <CardFooter className="flex justify-center border-t p-4 bg-muted/20">
+                    <Button variant="link" onClick={() => { setIsRegistering(!isRegistering); setError(""); }} className="text-rose-600">
+                        {isRegistering ? (
+                            <Text pt="Já tem conta? Faça Login" en="Have an account? Login" es="¿Ya tienes cuenta? Entrar" />
+                        ) : (
+                            <Text pt="Não tem conta? Cadastre-se" en="No account? Sign up" es="¿Sin cuenta? Regístrate" />
+                        )}
+                    </Button>
+                </CardFooter>
+            </Card>
         </div>
     );
 }
