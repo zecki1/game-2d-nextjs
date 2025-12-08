@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Dice5, ShoppingBag, User as UserIcon, LogOut } from "lucide-react";
+import { Dice5, ShoppingBag, User as UserIcon, LogOut } from "lucide-react"; // Adicionado Settings
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Text } from "@/components/providers/preferences-provider";
 import { Separator } from "@/components/ui/separator";
@@ -13,8 +13,9 @@ import { useRouter } from "next/navigation";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-// 'Badge' removido do import
-// import { Badge } from "@/components/ui/badge";
+
+// Importa o componente SettingsMenu
+import { SettingsMenu } from "@/components/settings-menu";
 
 export function SiteHeader() {
     const { user, logout } = useAuth();
@@ -53,6 +54,14 @@ export function SiteHeader() {
                     <LanguageSwitcher />
                     <Separator orientation="vertical" className="h-6 hidden sm:block" />
 
+                    {/* Botão de Settings para o layout Mobile/Desktop que não está logado */}
+                    {!user && (
+                        <div className="hidden sm:block">
+                            <SettingsMenu />
+                        </div>
+                    )}
+
+
                     {user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -83,6 +92,10 @@ export function SiteHeader() {
                                 <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer text-rose-600 focus:text-rose-700">
                                     <ShoppingBag className="mr-2 h-4 w-4" /> <Text pt={isPremium ? "Assinatura" : "Virar Premium"} en={isPremium ? "Subscription" : "Go Premium"} es={isPremium ? "Suscripción" : "Hazte Premium"} />
                                 </DropdownMenuItem>
+
+                                {/* NOVO ITEM: Configurações de Acessibilidade/Aparência */}
+                                <SettingsMenu isMenuItem={true} />
+
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={logout} className="text-red-500 cursor-pointer">
                                     <LogOut className="mr-2 h-4 w-4" /> <Text pt="Sair" en="Logout" es="Salir" />

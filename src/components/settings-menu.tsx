@@ -2,7 +2,7 @@
 
 import { usePreferences, Text } from "@/components/providers/preferences-provider";
 import { Button } from "@/components/ui/button";
-import { 
+import {
     Sheet,
     SheetContent,
     SheetDescription,
@@ -18,15 +18,20 @@ import {
     Type as TypeIcon,
     Eye,
     RotateCcw,
-    Palette
+    Palette,
+    Settings,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-// Definindo o tipo localmente para garantir a tipagem correta no cast
 type AccessibilityMode = "none" | "monochrome" | "protanopia" | "deuteranopia" | "tritanopia";
 
-export const SettingsMenu = () => {
+interface SettingsMenuProps {
+    isMenuItem?: boolean;
+}
+
+export const SettingsMenu = ({ isMenuItem = false }: SettingsMenuProps) => {
     const {
         accessibilityMode, setAccessibilityMode,
         fontSize, setFontSize,
@@ -41,12 +46,21 @@ export const SettingsMenu = () => {
         setTheme("system");
     };
 
+    const triggerContent = isMenuItem ? (
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+            <Settings className="mr-2 h-4 w-4" /> <Text pt="Configurações" en="Settings" es="Ajustes" />
+        </DropdownMenuItem>
+    ) : (
+        <Button variant="outline" size="icon" className="h-9 w-9">
+            <Accessibility className="h-[1.2rem] w-[1.2rem]" />
+        </Button>
+    );
+
     return (
         <Sheet>
+            {/* O SheetTrigger agora usa o triggerContent */}
             <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9">
-                    <Accessibility className="h-[1.2rem] w-[1.2rem]" />
-                </Button>
+                {triggerContent}
             </SheetTrigger>
             <SheetContent className="w-[350px] sm:w-[400px] overflow-y-auto px-4">
                 <SheetHeader>
@@ -94,6 +108,7 @@ export const SettingsMenu = () => {
                             <Text pt="Aparência" en="Appearance" es="Apariencia" />
                         </div>
                         <div className="rounded-lg border p-4 space-y-4">
+                            <Label className="block mb-2 text-sm font-medium"><Text pt="Tema" en="Theme" es="Tema" /></Label>
                             <div className="grid grid-cols-3 gap-2">
                                 {(['light', 'dark', 'system'] as const).map((mode) => (
                                     <Button
@@ -103,7 +118,7 @@ export const SettingsMenu = () => {
                                         onClick={() => setTheme(mode)}
                                         className="capitalize"
                                     >
-                                        {mode}
+                                        <Text pt={mode === 'system' ? 'Sistema' : mode === 'light' ? 'Claro' : 'Escuro'} en={mode} es={mode === 'system' ? 'Sistema' : mode === 'light' ? 'Claro' : 'Oscuro'} />
                                     </Button>
                                 ))}
                             </div>
@@ -115,13 +130,12 @@ export const SettingsMenu = () => {
                             </Label>
                             <RadioGroup
                                 value={accessibilityMode}
-                                // CORREÇÃO AQUI: Substituído 'as any' pelo tipo correto
                                 onValueChange={(val) => setAccessibilityMode(val as AccessibilityMode)}
                             >
                                 <div className="grid grid-cols-1 gap-2">
                                     {[
                                         { id: "none", l: "Normal" },
-                                        { id: "monochrome", l: "Monochrome" },
+                                        { id: "monochrome", l: "Monocromático" },
                                         { id: "protanopia", l: "Protanopia" },
                                         { id: "deuteranopia", l: "Deuteranopia" },
                                         { id: "tritanopia", l: "Tritanopia" }
@@ -138,7 +152,7 @@ export const SettingsMenu = () => {
 
                     <Button variant="destructive" className="w-full" onClick={resetSettings}>
                         <RotateCcw className="mr-2 h-4 w-4" />
-                        <Text pt="Resetar" en="Reset" es="Reiniciar" />
+                        <Text pt="Resetar Configurações" en="Reset Settings" es="Reiniciar Ajustes" />
                     </Button>
                 </div>
             </SheetContent>

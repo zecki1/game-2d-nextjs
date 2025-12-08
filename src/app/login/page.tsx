@@ -1,63 +1,105 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+// CORREÇÃO: Removida a importação de FirebaseError, pois não é exportada diretamente.
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+// O tipo FirebaseError pode ser usado se o @firebase/util estiver instalado, mas
+// para simplificar e corrigir o erro de build, usaremos um tratamento de erro mais genérico/seguro.
 import { auth, googleProvider } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Text } from "@/components/providers/preferences-provider";
 import { useRouter } from "next/navigation";
-import { Dice5, ShieldCheck } from "lucide-react"; 
+import { Dice5, ShieldCheck, Loader2 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
+
+// Interface para um erro que se parece com um FirebaseError
+interface AuthErrorWithCode extends Error {
+    code: string;
+}
 
 export default function LoginPage() {
     const router = useRouter();
-    const [isRegistering, setIsRegistering] = useState(false); 
+    const [isRegistering, setIsRegistering] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const handleGoogleLogin = async () => {
+    const handleGoogleLogin = useCallback(async () => {
+        setLoading(true);
+        setError("");
         try {
             await signInWithPopup(auth, googleProvider);
-            router.push("/");
-        } catch (error) {
-            console.error("Erro no login Google", error);
-            setError("Erro ao conectar com Google.");
-        }
-    };
+            router.push("/"); 
+        } catch (err) {
+            console.error("Erro no login Google:", err);
+            const authError = err as AuthErrorWithCode;
 
-    const handleEmailAuth = async () => {
+            if (authError && authError.code) {
+                if (authError.code === 'auth/popup-closed-by-user') {
+                    setError("O popup de login foi fechado.");
+                } else if (authError.code === 'auth/unauthorized-domain') {
+                    setError("Domínio não autorizado. Verifique as configurações no Firebase Console.");
+                } else {
+                    setError("Erro ao conectar com Google. Tente novamente.");
+                }
+            } else {
+                setError("Ocorreu um erro desconhecido ao tentar login com Google.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [router]);
+
+    const handleEmailAuth = useCallback(async () => {
+        if (!email || !password) {
+            setError("Por favor, preencha o email e a senha.");
+            return;
+        }
+
         setLoading(true);
         setError("");
         try {
             if (isRegistering) {
-               
                 await createUserWithEmailAndPassword(auth, email, password);
             } else {
-              
                 await signInWithEmailAndPassword(auth, email, password);
             }
-            router.push("/");
-        } catch (err) { 
-            console.error(err);
+            router.push("/"); 
+        } catch (err) {
+            console.error("Erro de autenticação:", err);
 
-           
-            if (typeof err === 'object' && err !== null && 'code' in err) {
-                const firebaseError = err as { code: string };
-                if (firebaseError.code === 'auth/invalid-credential') setError("Senha ou email incorretos.");
-                else if (firebaseError.code === 'auth/email-already-in-use') setError("Este email já está cadastrado.");
-                else if (firebaseError.code === 'auth/weak-password') setError("A senha deve ter pelo menos 6 caracteres.");
-                else setError("Ocorreu um erro. Tente novamente.");
+            const authError = err as AuthErrorWithCode;
+
+            if (authError && authError.code) {
+                switch (authError.code) {
+                    case 'auth/invalid-credential':
+                    case 'auth/wrong-password':
+                    case 'auth/user-not-found':
+                        setError(isRegistering ? "Email inválido ou senha fraca." : "Senha ou email incorretos.");
+                        break;
+                    case 'auth/email-already-in-use':
+                        setError("Este email já está cadastrado.");
+                        break;
+                    case 'auth/weak-password':
+                        setError("A senha deve ter pelo menos 6 caracteres.");
+                        break;
+                    case 'auth/invalid-email':
+                        setError("O formato do email é inválido.");
+                        break;
+                    default:
+                        setError("Ocorreu um erro. Tente novamente.");
+                        break;
+                }
             } else {
                 setError("Ocorreu um erro desconhecido. Tente novamente.");
             }
         } finally {
             setLoading(false);
         }
-    };
+    }, [isRegistering, email, password, router]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
@@ -81,8 +123,17 @@ export default function LoginPage() {
 
                     {/* Botões Sociais */}
                     <div className="grid gap-2">
-                        <Button variant="outline" className="w-full h-12 text-base gap-2 hover:bg-slate-50 dark:hover:bg-slate-800" onClick={handleGoogleLogin}>
-                            <FcGoogle className="w-5 h-5" />
+                        <Button
+                            variant="outline"
+                            className="w-full h-12 text-base gap-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                            onClick={handleGoogleLogin}
+                            disabled={loading}
+                        >
+                            {loading && !isRegistering && email === "" ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <FcGoogle className="w-5 h-5" />
+                            )}
                             <Text pt="Continuar com Google" en="Continue with Google" es="Continuar con Google" />
                         </Button>
                         {/* Microsoft Button - Placeholder visual até configurar Azure */}
@@ -105,19 +156,27 @@ export default function LoginPage() {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             className="h-12"
+                            disabled={loading}
                         />
                         <Input
                             type="password"
-                            placeholder={isRegistering ? "Crie uma senha" : "Sua senha"}
+                            placeholder={isRegistering ? "Crie uma senha (mínimo 6 caracteres)" : "Sua senha"}
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             className="h-12"
+                            disabled={loading}
                         />
-                        {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+                        {error && <p className="text-red-500 text-sm text-center font-medium mt-2">{error}</p>}
                     </div>
 
                     <Button className="w-full h-12 bg-rose-600 hover:bg-rose-700 font-bold text-lg shadow-md" onClick={handleEmailAuth} disabled={loading}>
-                        {loading ? "..." : isRegistering ? <Text pt="CRIAR CONTA" en="SIGN UP" es="REGISTRARSE" /> : <Text pt="ENTRAR" en="LOGIN" es="ENTRAR" />}
+                        {loading && email !== "" ? (
+                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                        ) : isRegistering ? (
+                            <Text pt="CRIAR CONTA" en="SIGN UP" es="REGISTRARSE" />
+                        ) : (
+                            <Text pt="ENTRAR" en="LOGIN" es="ENTRAR" />
+                        )}
                     </Button>
 
                     <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-2">
@@ -126,7 +185,7 @@ export default function LoginPage() {
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-center border-t p-4 bg-muted/20">
-                    <Button variant="link" onClick={() => setIsRegistering(!isRegistering)} className="text-rose-600">
+                    <Button variant="link" onClick={() => { setIsRegistering(!isRegistering); setError(""); }} className="text-rose-600 p-0 h-auto">
                         {isRegistering ? (
                             <Text pt="Já tem conta? Faça Login" en="Have an account? Login" es="¿Ya tienes cuenta? Entrar" />
                         ) : (
